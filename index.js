@@ -88,7 +88,7 @@ function close(code) {
         if (!children[i].exitCode) {
             opened++;
             children[i].removeAllListeners('close');
-            children[i].kill("SIGKILL");
+            process.kill(-children[i].pid);
             if (verbose) console.log('`' + children[i].cmd + '` will now be closed');
             children[i].on('close', function() {
                 closed++;
@@ -119,7 +119,8 @@ cmds.forEach(function (cmd) {
     var child = spawn(sh,[shFlag,cmd], {
         cwd: checkNodeVersion('8.0.0', process.versions.node) ? process.cwd() : process.cwd,
         env: process.env,
-        stdio: ['pipe', process.stdout, process.stderr]
+        stdio: ['pipe', process.stdout, process.stderr],
+        detached: true
     })
     .on('close', childClose);
     child.cmd = cmd
