@@ -88,7 +88,11 @@ function close(code) {
         if (!children[i].exitCode) {
             opened++;
             children[i].removeAllListeners('close');
-            process.kill(-children[i].pid);
+            try {
+                process.kill(-children[i].pid, "SIGINT");
+            } catch (err) {
+                //Do not handle error process.kill is apparently a GREAT peace of shit
+            }
             if (verbose) console.log('`' + children[i].cmd + '` will now be closed');
             children[i].on('close', function() {
                 closed++;
