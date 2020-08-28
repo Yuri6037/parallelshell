@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 
-'use strict';
+//'use strict';
 var spawn = require('child_process').spawn;
 
-var sh, shFlag, children, args, wait, cmds, verbose, kill, i ,len;
+var sh, shFlag, children, args, cmds, i ,len;
+verbose = false;
+kill = false;
+wait = false;
 // parsing argv
 cmds = [];
 args = process.argv.slice(2);
@@ -37,7 +40,7 @@ for (i = 0, len = args.length; i < len; i++) {
 }
 
 // called on close of a child process
-function childClose (code) {
+function childClose(code) {
     var i, len;
     code = code ? (code.code || code) : code;
     if (verbose) {
@@ -48,7 +51,10 @@ function childClose (code) {
         }
     }
     if (kill)
+    {
+        if (verbose) console.log("Running SIGINT on all children");
         close(code);
+    }
     else
     {
         if (code > 0 && !wait) close(code);
@@ -56,7 +62,7 @@ function childClose (code) {
     status();
 }
 
-function status () {
+function status() {
     if (verbose) {
         var i, len;
         console.log('\n');
@@ -75,14 +81,14 @@ function status () {
 }
 
 // closes all children and the process
-function close (code) {
+function close(code) {
     var i, len, closed = 0, opened = 0;
 
     for (i = 0, len = children.length; i < len; i++) {
         if (!children[i].exitCode) {
             opened++;
             children[i].removeAllListeners('close');
-            children[i].kill("SIGINT");
+            children[i].kill("SIGKILL");
             if (verbose) console.log('`' + children[i].cmd + '` will now be closed');
             children[i].on('close', function() {
                 closed++;
@@ -93,7 +99,6 @@ function close (code) {
         }
     }
     if (opened == closed) {process.exit(code);}
-
 }
 
 // cross platform compatibility
@@ -109,7 +114,7 @@ if (process.platform === 'win32') {
 children = [];
 cmds.forEach(function (cmd) {
     if (process.platform != 'win32') {
-      cmd = "exec "+cmd;
+        cmd = "exec "+cmd;
     }
     var child = spawn(sh,[shFlag,cmd], {
         cwd: checkNodeVersion('8.0.0', process.versions.node) ? process.cwd() : process.cwd,
@@ -128,7 +133,7 @@ process.on('SIGINT', close)
  * @string minimumRequired  example : 8.0.0
  * @string version          example : 10.0.0 
  */
-function checkNodeVersion (minimumRequired, version) {
+function checkNodeVersion(minimumRequired, version) {
     var minVer = minimumRequired.split('.')
     var ver = version.split('.')
     var result = false;
